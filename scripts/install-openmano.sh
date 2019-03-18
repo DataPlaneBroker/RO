@@ -50,14 +50,14 @@ function usage(){
 
 function install_packages(){
     [ -x /usr/bin/apt-get ] && apt-get install -y $*
-    [ -x /usr/bin/yum ]     && yum install     -y $*   
-    
+    [ -x /usr/bin/yum ]     && yum install     -y $*
+
     #check properly installed
     for PACKAGE in $*
     do
         PACKAGE_INSTALLED="no"
         [ -x /usr/bin/apt-get ] && dpkg -l $PACKAGE            &>> /dev/null && PACKAGE_INSTALLED="yes"
-        [ -x /usr/bin/yum ]     && yum list installed $PACKAGE &>> /dev/null && PACKAGE_INSTALLED="yes" 
+        [ -x /usr/bin/yum ]     && yum list installed $PACKAGE &>> /dev/null && PACKAGE_INSTALLED="yes"
         if [ "$PACKAGE_INSTALLED" = "no" ]
         then
             echo "failed to install package '$PACKAGE'. Revise network connectivity and try again" >&2
@@ -80,9 +80,9 @@ function ask_user(){
     done
 }
 
-GIT_URL=https://osm.etsi.org/gerrit/osm/RO.git
-export GIT_OVIM_URL=https://osm.etsi.org/gerrit/osm/openvim.git
-export GIT_OSMIM_URL=https://osm.etsi.org/gerrit/osm/IM.git
+GIT_URL=https://delta.lancs.ac.uk/osm-wg/RO.gitt
+export GIT_OVIM_URL=https://delta.lancs.ac.uk/osm-wg/openvim.git
+export GIT_OSMIM_URL=https://delta.lancs.ac.uk/osm-wg/IM.git
 DBUSER="root"
 DBPASSWD=""
 DBPASSWD_PARAM=""
@@ -160,9 +160,9 @@ fi
 
 # Discover Linux distribution
 # try redhat type
-[ -f /etc/redhat-release ] && _DISTRO=$(cat /etc/redhat-release 2>/dev/null | cut  -d" " -f1) 
+[ -f /etc/redhat-release ] && _DISTRO=$(cat /etc/redhat-release 2>/dev/null | cut  -d" " -f1)
 # if not assuming ubuntu type
-[ -f /etc/redhat-release ] || _DISTRO=$(lsb_release -is  2>/dev/null)            
+[ -f /etc/redhat-release ] || _DISTRO=$(lsb_release -is  2>/dev/null)
 if [ "$_DISTRO" == "Ubuntu" ]
 then
     _RELEASE=$(lsb_release -rs)
@@ -175,7 +175,7 @@ then
     fi
 elif [ "$_DISTRO" == "CentOS" ]
 then
-    _RELEASE="7" 
+    _RELEASE="7"
     if ! cat /etc/redhat-release | grep -q "7."
     then
         [[ -z $QUIET_MODE ]] &&
@@ -184,14 +184,14 @@ then
     fi
 elif [ "$_DISTRO" == "Red" ]
 then
-    _RELEASE="7" 
+    _RELEASE="7"
     if ! cat /etc/redhat-release | grep -q "7."
     then
         [[ -z $QUIET_MODE ]] &&
             ! ask_user "WARNING! Not tested Red Hat OS version. Continue assuming a '$_RELEASE' type (y/N)? " n &&
             echo "Cancelled" && exit 1
     fi
-else  #[ "$_DISTRO" != "Ubuntu" -a "$_DISTRO" != "CentOS" -a "$_DISTRO" != "Red" ] 
+else  #[ "$_DISTRO" != "Ubuntu" -a "$_DISTRO" != "CentOS" -a "$_DISTRO" != "Red" ]
     _DISTRO_DISCOVER=$_DISTRO
     [ -x /usr/bin/apt-get ] && _DISTRO="Ubuntu" && _RELEASE="14"
     [ -x /usr/bin/yum ]     && _DISTRO="CentOS" && _RELEASE="7"
@@ -347,7 +347,7 @@ then
         #Add the openmanod service to the default zone permanently and reload the firewall configuration
         firewall-cmd --permanent --add-service=openmanod > /dev/null
         firewall-cmd --reload > /dev/null
-        echo "done." 
+        echo "done."
     else
         echo "skipping."
     fi
@@ -375,7 +375,7 @@ then
     #    echo "    inserting /home/$SUDO_USER/bin in the PATH at .bashrc"
     #    su $SUDO_USER -c 'echo "PATH=\$PATH:\${HOME}/bin" >> ~/.bashrc'
     #fi
-    
+
     if [[ $SUDO_USER == root ]]
     then
         if ! echo $PATH | grep -q "${HOME}/bin"

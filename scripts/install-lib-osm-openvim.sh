@@ -22,7 +22,8 @@
 # author: Alfonso Tierno
 
 # It uses following env, if not provided filling by default
-[ -z "$GIT_OVIM_URL" ] && GIT_OVIM_URL=https://osm.etsi.org/gerrit/osm/openvim.git
+# [ -z "$GIT_OVIM_URL" ] && GIT_OVIM_URL=https://osm.etsi.org/gerrit/osm/openvim.git
+[ -z "$GIT_OVIM_URL" ] && GIT_OVIM_URL=https://delta.lancs.ac.uk/osm-wg/openvim.git
 [ -z "$DEVELOP" ] && DEVELOP=""
 # folder where RO is installed
 [ -z "$BASEFOLDER" ] && HERE=$(dirname $(readlink -f ${BASH_SOURCE[0]})) && BASEFOLDER=$(dirname $HERE)
