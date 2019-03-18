@@ -113,11 +113,14 @@ class WanLinkCreate(RefreshMixin, CreateAction):
             ovim: instance of openvim, abstraction layer that enable
                 SDN-related operations
         """
+        self.logger.info("PROCESS START")
         wan_link = persistence.get_by_uuid('instance_wim_nets', self.item_id)
+        self.logger.info("WAN LINK DATA/INST OKAY")
 
         # First we check if all the dependencies are solved
         instance_nets = persistence.get_instance_nets(
             wan_link['instance_scenario_id'], wan_link['sce_net_id'])
+        self.logger.info("INST NET LINK DATA/INST OKAY")
 
         try:
             dependency_statuses = [n['status'] for n in instance_nets]
