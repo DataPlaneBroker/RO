@@ -80,7 +80,7 @@ function ask_user(){
     done
 }
 
-GIT_URL=https://delta.lancs.ac.uk/osm-wg/RO.gitt
+GIT_URL=https://delta.lancs.ac.uk/osm-wg/RO.git
 export GIT_OVIM_URL=https://delta.lancs.ac.uk/osm-wg/openvim.git
 export GIT_OSMIM_URL=https://delta.lancs.ac.uk/osm-wg/IM.git
 DBUSER="root"
