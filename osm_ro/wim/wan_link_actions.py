@@ -332,8 +332,10 @@ class WanLinkCreate(RefreshMixin, CreateAction):
         # TODO: add multipoint and L3 connectivity.
         if len(connection_points) == 2:
             return 'ELINE'
+        if len(connection_points) => 3:
+            return 'ELAN'
         else:
-            raise NotImplementedError('Multipoint connectivity is not '
+            raise NotImplementedError('This connectivity is not '
                                       'supported yet.')
 
     def _update_persistent_data(self, persistence, service_uuid, conn_info):
