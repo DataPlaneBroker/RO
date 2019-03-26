@@ -332,7 +332,7 @@ class WanLinkCreate(RefreshMixin, CreateAction):
         # TODO: add multipoint and L3 connectivity.
         if len(connection_points) == 2:
             return 'ELINE'
-        if len(connection_points) => 3:
+        if len(connection_points) >= 3:
             return 'ELAN'
         else:
             raise NotImplementedError('This connectivity is not '
