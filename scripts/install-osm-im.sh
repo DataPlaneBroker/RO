@@ -22,7 +22,7 @@
 # author: Alfonso Tierno
 
 # It uses following env, if not provided filling by default
-[ -z "$GIT_OSMIM_URL" ] && GIT_OSMIM_URL=https://delta.lancs.ac.uk/osm-wg/IM.git
+[ -z "$GIT_OSMIM_URL" ] && GIT_OSMIM_URL=git@delta.lancs.ac.uk:osm-wg/IM.git
 [ -z "$DEVELOP" ] && DEVELOP=""
 # folder where RO is installed
 [ -z "$BASEFOLDER" ] && HERE=$(dirname $(readlink -f ${BASH_SOURCE[0]})) && BASEFOLDER=$(dirname $HERE)
