@@ -22,8 +22,8 @@
 # contact with: <highperformance-networks@bristol.ac.uk>
 #
 # Neither the name of the University of Bristol, University of Lancaster 
-# nor the names of its contributors may be used to endorse or promote products 
-# derived from this software without specific prior written permission.
+# nor the names of its contributors may be used to endorse or promote 
+# products derived from this software without specific prior written permission.
 #
 # This work has been performed in the context of DCMS UK 5G Testbeds
 # & Trials Programme and in the framework of the Metro-Haul project -
@@ -68,7 +68,7 @@ class DpbSshInterface():
         self.__stdin, self.__stdout = self.__connect()
         self.logger.info("SSH connection to DPB made OK")
 
-    def post(self, function, url_params="", data=None):
+    def post(self, function, url_params="", data=None, get_response=True):
         if data == None:
             data = {}
         url_ext_info = url_params.split('/')
@@ -164,19 +164,17 @@ class DpbRestInterface():
     def __init__(self, wim_account, wim_url, wim_port, network, logger_name):
         self.logger = logging.getLogger(logger_name + self.__LOGGER_NAME_EXT)
         self.__account = wim_account
-        self.__base_url = "http://{}:{}/network/{}/".format(wim_url, str(wim_port), network)
+        self.__base_url = "http://{}:{}/network/{}".format(wim_url, str(wim_port), network)
         self.logger.info("REST OK")
 
-    def post(self, function, url_params="", data=None):
-        url = self.__base_url + url_params + function[self.__FUNCTION_MAP_POS]
+    def post(self, function, url_params="", data=None, get_response=True):
+        url = self.__base_url + url_params + "/" + function[self.__FUNCTION_MAP_POS]
         try:
             response = requests.post(url, json=data)
-            if response.status_code != 200:
-                raise WimConnectorError("REST request failed (non-200 status code)")
-            print(response.url)
-            print(response.headers['Content-Type'])
-            print(response)
-            return response
+            '''if response.status_code != 200:
+                raise WimConnectorError("REST request failed (non-200 status code)")'''
+            if get_response:
+                return response.json()
         except:
             raise WimConnectorError("REST request failed", 500)
 
@@ -251,7 +249,8 @@ class DpbConnector(WimConnector):
         self.logger.debug("Credentials checked.....(lies)")
         
     def create_connectivity_service(self, service_type, connection_points, **kwargs):
-        self.__check_service(service_type, connection_points, kwargs)
+        self.logger.info("CREATING CONNECTIVITY SERVICE")
+        #self.__check_service(service_type, connection_points, kwargs)
         response = self.__post(self.__ACTIONS_MAP.get("CREATE"))
         if "service-id" in response:
             service_id = int(response.get("service-id"))
@@ -266,25 +265,28 @@ class DpbConnector(WimConnector):
                 "egress-bw": 10.0})
                 #"ingress-bw": (bandwidth.get(point.get("service_endpoint_id"))).get("ingress"),
                 #"egress-bw": (bandwidth.get(point.get("service_endpoint_id"))).get("egress")}
-        self.__post(self.__ACTIONS_MAP.get("DEFINE"), "service/"+str(service_id), data)
-        self.__post(self.__ACTIONS_MAP.get("ACTIVATE"), "service/"+str(service_id))
+        self.__post(self.__ACTIONS_MAP.get("DEFINE"), "/service/"+str(service_id), data, get_response=False)
+        self.__post(self.__ACTIONS_MAP.get("ACTIVATE"), "/service/"+str(service_id), get_response=False)
+        self.logger.info("CREATED CONNECTIVITY SERVICE")
         return (str(service_id), None)
 
     def get_connectivity_service_status(self, service_uuid, conn_info=None):
+        self.logger.info("CHECKING CONNECTIVITY SERVICE STATUS")
         data = {
             "timeout-millis": 10000,
             "acceptable": ["ACTIVE", "FAILED"]
         }
-        response = self.__post(self.__ACTIONS_MAP.get("CHECK"), "service/"+service_uuid, data)#
+        response = self.__post(self.__ACTIONS_MAP.get("CHECK"), "/service/"+service_uuid, data)
         if "status" in response:
             status = response.get("status", None)
+            self.logger.info("CHECKED CONNECTIVITY SERVICE STATUS")
             return {"wim_status": self.__STATUS_MAP.get(status)}
         else:
             raise WimConnectorError("Invalid status check response", 500)
 
     def delete_connectivity_service(self, service_uuid, conn_info=None):
-        self.__post(self.__ACTIONS_MAP.get("DEACTIVATE"), "service/"+service_id)
-        self.__post(self.__ACTIONS_MAP.get("RELEASE"), "service/"+service_id)
+        self.__post(self.__ACTIONS_MAP.get("DEACTIVATE"), "/service/"+service_id)
+        self.__post(self.__ACTIONS_MAP.get("RELEASE"), "/service/"+service_id)
 
     def edit_connectivity_service(self, service_uuid, conn_info=None,
                                   connection_points=None, **kwargs):
