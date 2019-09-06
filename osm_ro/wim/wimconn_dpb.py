@@ -170,6 +170,7 @@ class DpbRestInterface():
     def post(self, function, url_params="", data=None, get_response=True):
         url = self.__base_url + url_params + "/" + function[self.__FUNCTION_MAP_POS]
         try:
+            self.logger.info(data)
             response = requests.post(url, json=data)
             '''if response.status_code != 200:
                 raise WimConnectorError("REST request failed (non-200 status code)")'''
@@ -208,9 +209,11 @@ class DpbConnector(WimConnector):
         "GET": ("services", "NOT IMPLEMENTED")
     }
 
+    __DEFAULT_BANDWIDTH = 10
+
     def __init__(self, wim, wim_account, config):
         self.logger = logging.getLogger(self.__LOGGER_NAME)
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG) #FIXME: Remove when testing complete
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
         self.__wim = wim
         self.__account = wim_account
@@ -254,18 +257,17 @@ class DpbConnector(WimConnector):
         response = self.__post(self.__ACTIONS_MAP.get("CREATE"))
         if "service-id" in response:
             service_id = int(response.get("service-id"))
+            self.logger.debug("service-id Debug: "+str(service_id))
         else:
             raise WimConnectorError("Invalid create service response", 500)
-        data = {"segment": []}
-        for point in connection_points:
-            data["segment"].append({
-                "terminal-name": point.get("service_endpoint_id"),
-                "label": int((point.get("service_endpoint_encapsulation_info")).get("vlan")),
-                "ingress-bw": 10.0,
-                "egress-bw": 10.0})
-                #"ingress-bw": (bandwidth.get(point.get("service_endpoint_id"))).get("ingress"),
-                #"egress-bw": (bandwidth.get(point.get("service_endpoint_id"))).get("egress")}
+
+        ## Log Point
+        self.logger.debug("Create Service Bandwidth Provided: " + str(kwargs.get("bandwidth")))
+        ## End Log Point
+
+        data = self.__define_service(connection_points, kwargs.get("bandwidth", None))
         self.__post(self.__ACTIONS_MAP.get("DEFINE"), "/service/"+str(service_id), data, get_response=False)
+        
         self.__post(self.__ACTIONS_MAP.get("ACTIVATE"), "/service/"+str(service_id), get_response=False)
         self.logger.info("CREATED CONNECTIVITY SERVICE")
         return (str(service_id), None)
@@ -285,16 +287,67 @@ class DpbConnector(WimConnector):
             raise WimConnectorError("Invalid status check response", 500)
 
     def delete_connectivity_service(self, service_uuid, conn_info=None):
-        self.__post(self.__ACTIONS_MAP.get("DEACTIVATE"), "/service/"+service_id)
-        self.__post(self.__ACTIONS_MAP.get("RELEASE"), "/service/"+service_id)
-
+#        self.__post(self.__ACTIONS_MAP.get("DEACTIVATE"), "/service/"+service_id)
+        self.logger.debug("deletion infO - suuId= "+str(service_uuid)+" conn_info= "+str(conn_info))
+        self.logger.info("deletion infO - suuId= "+str(service_uuid)+" conn_info= "+str(conn_info))
+        self.__post(self.__ACTIONS_MAP.get("RELEASE"), "/service/"+service_uuid,get_response=False)
+        self.logger.debug("delete_connectivity_service: service_uuid='{}' conn_info='{}'".format(service_uuid,conn_info))
+#        self.connectivity.pop(service_uuid, None)
+        return None
+    
     def edit_connectivity_service(self, service_uuid, conn_info=None,
                                   connection_points=None, **kwargs):
-        self.logger.debug("Can't edit service")
+        """Change an existing connectivity service."""
+        ## Log Point
+        self.logger.info("Edit Service Call")
+        self.logger.debug("Edit Service Bandwidth Provided: " + str(kwargs.get("bandwidth")))
+        ## End Log Point
+
+        ## Release Old
+        self.logger.info("RELEASING SERVICE")
+        self.__post(self.__ACTIONS_MAP.get("RELEASE"), "/service/"+service_uuid,get_response=false)
+
+        ## Create New
+        self.logger.info("CREATING SERVICE")
+        response = self.__post(self.__ACTIONS_MAP.get("CREATE"))
+        if "service-id" in response:
+            _id = str(response.get("service-id"))
+            self.logger.debug("service-id Debug: "+str(_id))
+            self.logger.info("service-id Info:"+str(_id))
+        else:
+            raise WimConnectorError("Invalid create service response", 500)
+
+        ## Define New
+        data = self.__define_service(connection_points, kwargs.get("bandwidth", None))
+        self.__post(self.__ACTIONS_MAP.get("DEFINE"), "/service/"+str(_id), data, get_response=False)
+
+        ## Activate New
+        self.__post(self.__ACTIONS_MAP.get("ACTIVATE"), "/service/"+str(_id), get_response=False)
+
+        ## Complete -> Return
+        self.connectivity[_id] = {"nb": self.counter}
+        # self.counter += 1
+        self.logger.info("EDITED CONNECTIVITY SERVICE")
+        return (_id, self.connectivity[_id])
 
     def clear_all_connectivity_services(self):
         services = self.__get(self.__ACTIONS_MAP.get("GET"))
         self.logger.debug("Can't clear all services")
+
+    def __define_service(self, connection_points, bandwidth):
+        """
+        define a service in the terms of the DPB
+        """
+        if bandwidth == None:
+            bandwidth = self.__DEFAULT_BANDWIDTH
+        data = {"segment": []}
+        for point in connection_points:
+            data["segment"].append({
+                "terminal-name": point.get("service_endpoint_id"),
+                "label": int((point.get("service_endpoint_encapsulation_info")).get("vlan")),
+                "ingress-bw": bandwidth,
+                "egress-bw": bandwidth})
+        return data
 
     def __check_service(self, serv_type, points, kwargs):
         if not serv_type in self.__SUPPORTED_SERV_TYPES:
